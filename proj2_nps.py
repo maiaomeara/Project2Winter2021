@@ -268,7 +268,7 @@ def get_nearby_places(site_object):
     print('-------------------------------------')
     print('Places near', site_object.name)
     print('-------------------------------------')
-    mapquest_results = []
+    mapquest_results = {}
     for result in results:
         result_dict = {}
         if result['fields']['name'] == '':
@@ -287,7 +287,7 @@ def get_nearby_places(site_object):
             result_dict['city'] = 'no city'
         else:
             result_dict['city'] = result['fields']['city']
-        mapquest_results.append(result_dict)
+        mapquest_results[result['fields']['name']] = result_dict
         print('- '+ result_dict['name'] +' (' + result_dict['category'] + '): ' + result_dict['address'] + ', ' + result_dict['city'])
 
     return mapquest_results
@@ -303,7 +303,7 @@ if __name__ == "__main__":
         state_input = input("That is not a state. Enter a state name or 'Exit':  ")
 
     if state_input.lower() == 'exit':
-        pass
+        quit()
     else:
         state_sites = get_sites_for_state(state_url_dict[state_input.lower()])
         print('-------------------------------------')
