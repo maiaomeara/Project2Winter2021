@@ -8,6 +8,42 @@ import requests
 import json
 import secrets # file that contains your API key
 
+CACHE_FILENAME = "nps_cache.json"
+
+def open_cache():
+    ''' opens the cache file if it exists and loads the JSON into
+    a dictionary, which it then returns.
+    if the cache file doesn't exist, creates a new cache dictionary
+    Parameters
+    ----------
+    None
+    Returns
+    -------
+    The opened cache
+    '''
+    try:
+        cache_file = open(CACHE_FILENAME, 'r')
+        cache_contents = cache_file.read()
+        cache_dict = json.loads(cache_contents)
+        cache_file.close()
+    except:
+        cache_dict = {}
+    return cache_dict
+
+def save_cache(cache_dict):
+    ''' saves the current state of the cache to disk
+    Parameters
+    ----------
+    cache_dict: dict
+        The dictionary to save
+    Returns
+    -------
+    None
+    '''
+    dumped_json_cache = json.dumps(cache_dict)
+    fw = open(CACHE_FILENAME,"w")
+    fw.write(dumped_json_cache)
+    fw.close()
 
 class NationalSite:
     '''a national site
@@ -59,11 +95,19 @@ def build_state_url_dict():
     state_name = []
     state_url = []
     state_url_dict = {}
+    url = 'https://www.nps.gov/index.htm'
 
     # Accessing NPS site for relevant data
-    url = 'https://www.nps.gov/index.htm'
-    response = requests.get(url)
-    nps_index_text = BeautifulSoup(response.text, 'html.parser')
+    if url in NPS_CACHE:
+        print('Using Cache')
+    else:
+        print('Fetching')
+        response = requests.get(url)
+        NPS_CACHE[url] = response.text
+        save_cache(NPS_CACHE)
+
+    nps_index_text = BeautifulSoup(NPS_CACHE[url], 'html.parser')
+
     all_list_items = nps_index_text.find('ul', {'class': 'dropdown-menu SearchBar-keywordSearch'}).find_all('a')
 
     for item in all_list_items:
@@ -91,10 +135,18 @@ def get_site_instance(site_url):
         a national site instance
     '''
     url = site_url
-    response = requests.get(url)
-    nps_site_text = BeautifulSoup(response.text, 'html.parser')
 
-    # Accessing relevant data for NationalSites class, if statements confirm data exist and creates a blank field if not
+    if url in NPS_CACHE:
+        print('Using Cache')
+    else:
+        print('Fetching')
+        response = requests.get(url)
+        NPS_CACHE[url] = response.text
+        save_cache(NPS_CACHE)
+
+    nps_site_text = BeautifulSoup(NPS_CACHE[url], 'html.parser')
+
+    # Accessing relevant data for NationalSites class, 'if' statements confirm data exist and create a blank field if not
     if nps_site_text.find('div', {'class': 'Hero-titleContainer clearfix'}).find('a'):
         name = nps_site_text.find('div', {'class': 'Hero-titleContainer clearfix'}).find('a').text.strip()
     else:
@@ -149,7 +201,26 @@ def get_sites_for_state(state_url):
     list
         a list of national site instances
     '''
-    pass
+    site_urls = []
+    site_list = []
+
+    if state_url in NPS_CACHE:
+        print('Using Cache')
+    else:
+        print('Fetching')
+        response = requests.get(state_url)
+        NPS_CACHE[state_url] = response.text
+        save_cache(NPS_CACHE)
+
+    nps_state_text = BeautifulSoup(NPS_CACHE[state_url], 'html.parser')
+    site_keys = nps_state_text.find('ul', {'id': 'list_parks'}).find_all('h3')
+    for key in site_keys:
+        site_url = 'https://www.nps.gov' + key.find('a').get('href') + 'index.htm'
+        site_urls.append(site_url)
+    for url in site_urls:
+        site_list.append(get_site_instance(url))
+
+    return site_list
 
 
 def get_nearby_places(site_object):
@@ -167,20 +238,19 @@ def get_nearby_places(site_object):
     '''
     pass
 
-park = get_site_instance('https://www.nps.gov/yose/index.htm')
-print(park.info())
-
-
-
-# <div class="Hero-titleContainer clearfix">
-# <a href="/isro/" class="Hero-title " id="anch_10">Isle Royale</a>
-# <div class="Hero-designationContainer">
-# <span class="Hero-designation">National Park</span>
-# <span class="Hero-location">Michigan</span>
-# </div>
-# </div>
-
-# site = NationalSite(name, address, zipcode, phone, category)
-
 if __name__ == "__main__":
-    pass
+    NPS_CACHE = open_cache()
+    state_url_dict = build_state_url_dict()
+    state_input = input("Enter a state name or 'Exit': ")
+    while not (state_input.lower() in state_url_dict.keys() or
+                state_input.lower()=='exit'):
+        state_input = input("That is not a state. Enter a state name or 'Exit':  ")
+    if state_input.lower() == 'exit':
+        pass
+    else:
+        state_sites = get_sites_for_state(state_url_dict[state_input.lower()])
+        print('-------------------------------------')
+        print('List of National Sites in', state_input.upper())
+        print('-------------------------------------')
+        for site in state_sites:
+            print('[', state_sites.index(site)+1, ']', site.info())
