@@ -316,7 +316,7 @@ if __name__ == "__main__":
     # Step 3
     site_num = input("Enter a number for detailed search or 'exit' or 'back':  ")
     if site_num.lower() == 'exit':
-        pass
+        quit()
     elif site_num.lower() == 'back':
             state_input = input("Enter a state name or 'Exit': ")
             while not (state_input.lower() in state_url_dict.keys() or
@@ -324,7 +324,7 @@ if __name__ == "__main__":
                 state_input = input("That is not a state. Enter a state name or 'Exit':  ")
 
             if state_input.lower() == 'exit':
-                pass
+                quit()
             else:
                 state_sites = get_sites_for_state(state_url_dict[state_input.lower()])
                 print('-------------------------------------')
