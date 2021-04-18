@@ -45,6 +45,8 @@ def save_cache(cache_dict):
     fw.write(dumped_json_cache)
     fw.close()
 
+NPS_CACHE = open_cache()
+
 class NationalSite:
     '''a national site
 
@@ -236,21 +238,142 @@ def get_nearby_places(site_object):
     dict
         a converted API return from MapQuest API
     '''
-    pass
+    #Constructing request URL
+    baseurl = 'http://www.mapquestapi.com/search/v2/radius'
+    params = {
+        'key': secrets.API_KEY,
+        'origin': site_object.zipcode,
+        'radius': 10,
+        'maxMatches': 10,
+        'ambiguities': 'ignore',
+        'outFormat': 'json'
+    }
+    param_strings = []
+    connector = '_'
+    for key in params.keys():
+        param_strings.append(f'{key}_{params[key]}')
+    param_strings.sort()
+    site_key = baseurl + connector + connector.join(param_strings)
+
+    # Using the cache
+
+    if site_key in NPS_CACHE.keys():
+        print("Using cache", site_key)
+    else:
+        print("Fetching", site_key)
+        NPS_CACHE[site_key] = requests.get(baseurl, params=params).json()
+        save_cache(NPS_CACHE)
+
+    results = NPS_CACHE[site_key]['searchResults']
+    print('-------------------------------------')
+    print('Places near', site_object.name)
+    print('-------------------------------------')
+    mapquest_results = []
+    for result in results:
+        result_dict = {}
+        if result['fields']['name'] == '':
+            result_dict['name'] = 'no name'
+        else:
+            result_dict['name'] = result['fields']['name']
+        if result['fields']['group_sic_code_name'] == '':
+            result_dict['category'] = 'no category'
+        else:
+            result_dict['category'] = result['fields']['group_sic_code_name']
+        if result['fields']['address'] == '':
+            result_dict['address'] = 'no address'
+        else:
+            result_dict['address'] = result['fields']['address']
+        if result['fields']['city'] == '':
+            result_dict['city'] = 'no city'
+        else:
+            result_dict['city'] = result['fields']['city']
+        mapquest_results.append(result_dict)
+        print('- '+ result_dict['name'] +' (' + result_dict['category'] + '): ' + result_dict['address'] + ', ' + result_dict['city'])
+
+    return mapquest_results
+
+# #Constructing request URL
+# isle_royale = get_site_instance('https://www.nps.gov/isro/index.htm')
+# baseurl = 'http://www.mapquestapi.com/search/v2/radius'
+# params = {
+#     'key': secrets.API_KEY,
+#     'origin': isle_royale.zipcode,
+#     'radius': 10,
+#     'maxMatches': 10,
+#     'ambiguities': 'ignore',
+#     'outFormat': 'json'
+# }
+# param_strings = []
+# connector = '_'
+# for key in params.keys():
+#     param_strings.append(f'{key}_{params[key]}')
+# param_strings.sort()
+# site_key = baseurl + connector + connector.join(param_strings)
+
+# # Using the cache
+
+# if site_key in NPS_CACHE.keys():
+#     print("Using Cache", site_key)
+# else:
+#     print("Fetching", site_key)
+#     NPS_CACHE[site_key] = requests.get(baseurl, params=params).json()
+#     save_cache(NPS_CACHE)
+
+# print(type(NPS_CACHE[site_key]))
+
+# results = NPS_CACHE[site_key]['searchResults']
+# print(results)
+# mapquest_results = []
+# for result in results:
+#     result_dict = {}
+#     result_dict['name'] = result['fields']['name']
+#     result_dict['category'] = result['fields']['group_sic_code_name']
+#     result_dict['address'] = result['fields']['address']
+#     result_dict['city'] = result['fields']['city']
+#     mapquest_results.append(result_dict)
+#     print('- '+ result_dict['name'] +' (' + result_dict['category'] + '): ' + result_dict['address'] + ', ' + result_dict['city'])
 
 if __name__ == "__main__":
-    NPS_CACHE = open_cache()
     state_url_dict = build_state_url_dict()
     state_input = input("Enter a state name or 'Exit': ")
+
     while not (state_input.lower() in state_url_dict.keys() or
                 state_input.lower()=='exit'):
         state_input = input("That is not a state. Enter a state name or 'Exit':  ")
+
     if state_input.lower() == 'exit':
         pass
     else:
         state_sites = get_sites_for_state(state_url_dict[state_input.lower()])
         print('-------------------------------------')
-        print('List of National Sites in', state_input.upper())
+        print('List of National Sites in', state_input.title())
         print('-------------------------------------')
         for site in state_sites:
-            print('[', state_sites.index(site)+1, ']', site.info())
+            index = state_sites.index(site)+1
+            print('[' + str(index) + '] ' + site.info())
+
+    site_num = input("Enter a number for detailed search or 'exit' or 'back':  ")
+    if site_num.lower() == 'exit':
+        pass
+    elif site_num.lower() == 'back':
+            state_input = input("Enter a state name or 'Exit': ")
+            while not (state_input.lower() in state_url_dict.keys() or
+                        state_input.lower()=='exit'):
+                state_input = input("That is not a state. Enter a state name or 'Exit':  ")
+
+            if state_input.lower() == 'exit':
+                pass
+            else:
+                state_sites = get_sites_for_state(state_url_dict[state_input.lower()])
+                print('-------------------------------------')
+                print('List of National Sites in', state_input.title())
+                print('-------------------------------------')
+                for site in state_sites:
+                    index = state_sites.index(site)+1
+                    print('[' + str(index) + '] ' + site.info())
+    else:
+        while not (site_num.isnumeric() and
+            int(site_num) <= len(state_sites)):
+            print("Invalid input.")
+            site_num = input("Enter a number for detailed search or 'exit' or 'back': ")
+        get_nearby_places(state_sites[(int(site_num)-1)])
