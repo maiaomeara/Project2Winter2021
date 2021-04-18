@@ -292,49 +292,10 @@ def get_nearby_places(site_object):
 
     return mapquest_results
 
-# #Constructing request URL
-# isle_royale = get_site_instance('https://www.nps.gov/isro/index.htm')
-# baseurl = 'http://www.mapquestapi.com/search/v2/radius'
-# params = {
-#     'key': secrets.API_KEY,
-#     'origin': isle_royale.zipcode,
-#     'radius': 10,
-#     'maxMatches': 10,
-#     'ambiguities': 'ignore',
-#     'outFormat': 'json'
-# }
-# param_strings = []
-# connector = '_'
-# for key in params.keys():
-#     param_strings.append(f'{key}_{params[key]}')
-# param_strings.sort()
-# site_key = baseurl + connector + connector.join(param_strings)
-
-# # Using the cache
-
-# if site_key in NPS_CACHE.keys():
-#     print("Using Cache", site_key)
-# else:
-#     print("Fetching", site_key)
-#     NPS_CACHE[site_key] = requests.get(baseurl, params=params).json()
-#     save_cache(NPS_CACHE)
-
-# print(type(NPS_CACHE[site_key]))
-
-# results = NPS_CACHE[site_key]['searchResults']
-# print(results)
-# mapquest_results = []
-# for result in results:
-#     result_dict = {}
-#     result_dict['name'] = result['fields']['name']
-#     result_dict['category'] = result['fields']['group_sic_code_name']
-#     result_dict['address'] = result['fields']['address']
-#     result_dict['city'] = result['fields']['city']
-#     mapquest_results.append(result_dict)
-#     print('- '+ result_dict['name'] +' (' + result_dict['category'] + '): ' + result_dict['address'] + ', ' + result_dict['city'])
 
 if __name__ == "__main__":
     state_url_dict = build_state_url_dict()
+    # Step 1 & Step 2
     state_input = input("Enter a state name or 'Exit': ")
 
     while not (state_input.lower() in state_url_dict.keys() or
@@ -352,6 +313,7 @@ if __name__ == "__main__":
             index = state_sites.index(site)+1
             print('[' + str(index) + '] ' + site.info())
 
+    # Step 3
     site_num = input("Enter a number for detailed search or 'exit' or 'back':  ")
     if site_num.lower() == 'exit':
         pass
