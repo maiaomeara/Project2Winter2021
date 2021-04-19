@@ -298,44 +298,29 @@ if __name__ == "__main__":
     # Step 1 & Step 2
     state_input = input("Enter a state name or 'Exit': ")
 
-    while not (state_input.lower() in state_url_dict.keys() or
-                state_input.lower()=='exit'):
-        state_input = input("That is not a state. Enter a state name or 'Exit':  ")
-
-    if state_input.lower() == 'exit':
-        quit()
-    else:
-        state_sites = get_sites_for_state(state_url_dict[state_input.lower()])
-        print('-------------------------------------')
-        print('List of National Sites in', state_input.title())
-        print('-------------------------------------')
-        for site in state_sites:
-            index = state_sites.index(site)+1
-            print('[' + str(index) + '] ' + site.info())
-
-    # Step 3
-    site_num = input("Enter a number for detailed search or 'exit' or 'back':  ")
-    if site_num.lower() == 'exit':
-        quit()
-    elif site_num.lower() == 'back':
-            state_input = input("Enter a state name or 'Exit': ")
-            while not (state_input.lower() in state_url_dict.keys() or
-                        state_input.lower()=='exit'):
-                state_input = input("That is not a state. Enter a state name or 'Exit':  ")
-
-            if state_input.lower() == 'exit':
-                quit()
-            else:
-                state_sites = get_sites_for_state(state_url_dict[state_input.lower()])
-                print('-------------------------------------')
-                print('List of National Sites in', state_input.title())
-                print('-------------------------------------')
-                for site in state_sites:
-                    index = state_sites.index(site)+1
-                    print('[' + str(index) + '] ' + site.info())
-    else:
-        while not (site_num.isnumeric() and
-            int(site_num) <= len(state_sites)):
-            print("Invalid input.")
-            site_num = input("Enter a number for detailed search or 'exit' or 'back': ")
-        get_nearby_places(state_sites[(int(site_num)-1)])
+    while True:
+        if state_input.lower() == 'exit':
+            quit()
+        elif state_input.lower() in state_url_dict.keys():
+            state_sites = get_sites_for_state(state_url_dict[state_input.lower()])
+            print('-------------------------------------')
+            print('List of National Sites in', state_input.title())
+            print('-------------------------------------')
+            for site in state_sites:
+                index = state_sites.index(site)+1
+                print('[' + str(index) + '] ' + site.info())
+            while True:
+                site_num = input("Enter a number for detailed search or 'Exit' or 'Back':  ")
+                if site_num.lower() == 'back':
+                    state_input = input("Enter a state name or 'Exit': ")
+                    break
+                elif site_num.lower() == 'exit':
+                    quit()
+                else:
+                    while not (site_num.isnumeric() and
+                        int(site_num) <= len(state_sites)):
+                        print("Invalid input.")
+                        site_num = input("Enter a number for detailed search or 'exit' or 'back': ")
+                    get_nearby_places(state_sites[(int(site_num)-1)])
+        else:
+            state_input = input("That is not a state. Enter a state name or 'Exit':  ")
