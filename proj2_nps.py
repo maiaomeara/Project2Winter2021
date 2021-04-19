@@ -264,11 +264,11 @@ def get_nearby_places(site_object):
         NPS_CACHE[site_key] = requests.get(baseurl, params=params).json()
         save_cache(NPS_CACHE)
 
+    # Creating formatted display
     results = NPS_CACHE[site_key]['searchResults']
     print('-------------------------------------')
     print('Places near', site_object.name)
     print('-------------------------------------')
-    mapquest_results = {}
     for result in results:
         result_dict = {}
         if result['fields']['name'] == '':
@@ -287,10 +287,9 @@ def get_nearby_places(site_object):
             result_dict['city'] = 'no city'
         else:
             result_dict['city'] = result['fields']['city']
-        mapquest_results[result['fields']['name']] = result_dict
         print('- '+ result_dict['name'] +' (' + result_dict['category'] + '): ' + result_dict['address'] + ', ' + result_dict['city'])
 
-    return mapquest_results
+    return NPS_CACHE[site_key]
 
 
 if __name__ == "__main__":
